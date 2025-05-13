@@ -1,0 +1,43 @@
+{
+  "name": "qihang_ai",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "export NODE_ENV=development && next dev --turbopack",
+    "build": "export NODE_ENV=production && next build",
+    "start": "export NODE_ENV=production && next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
+    "@reduxjs/toolkit": "^2.7.0",
+    "antd": "^5.24.7",
+    "echarts": "^5.6.0",
+    "echarts-for-react": "^3.0.2",
+    "iron-session": "^8.0.4",
+    "lowdb": "^7.0.1",
+    "next": "^15.3.1",
+    "next-redux-wrapper": "^8.1.0",
+    "openai": "^4.85.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.0.0",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.2.0",
+    "react-syntax-highlighter": "^15.6.1",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.7",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}

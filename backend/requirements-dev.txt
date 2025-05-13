@@ -1,0 +1,10 @@
+# 测试依赖
+pytest==7.4.0
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.0  # 用于FastAPI的TestClient
+
+# 代码风格和质量检查
+flake8==6.1.0
+black==23.7.0
+isort==5.12.0 

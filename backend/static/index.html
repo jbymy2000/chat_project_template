@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>XXAI对话</title>
+        <style>
+            body {
+                font-family: "Arial", sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+            .chat-container {
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            .chat-messages {
+                height: 400px;
+                overflow-y: auto;
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
+                padding: 10px;
+                margin-bottom: 20px;
+                background-color: #f9f9f9;
+            }
+            .message {
+                margin-bottom: 10px;
+                padding: 10px;
+                border-radius: 4px;
+            }
+            .user-message {
+                background-color: #e3f2fd;
+                margin-left: 20%;
+            }
+            .ai-message {
+                background-color: #f1f1f1;
+                margin-right: 20%;
+            }
+            .input-container {
+                display: flex;
+                gap: 10px;
+            }
+            input[type="text"] {
+                flex: 1;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            button {
+                padding: 10px 20px;
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            button:hover {
+                background-color: #45a049;
+            }
+            button:disabled {
+                background-color: #cccccc;
+                cursor: not-allowed;
+            }
+            .status {
+                margin-top: 10px;
+                font-style: italic;
+                color: #666;
+            }
+            .timestamp {
+                font-size: 12px;
+                color: #888;
+                margin-top: 5px;
+            }
+            .login-container {
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            .login-form {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+            .form-group label {
+                font-weight: bold;
+            }
+            .error-message {
+                color: #f44336;
+                margin-top: 10px;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>XXAI对话</h1>
+
+        <div class="login-container" id="loginContainer">
+            <h2>登录</h2>
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input
+                        type="text"
+                        id="username"
+                        placeholder="请输入用户名"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="请输入密码"
+                    />
+                </div>
+                <button id="loginButton">登录</button>
+                <div class="error-message" id="loginError"></div>
+            </div>
+        </div>
+
+        <div class="chat-container hidden" id="chatContainer">
+            <div class="chat-messages" id="chatMessages"></div>
+
+            <div class="input-container">
+                <input
+                    type="text"
+                    id="userInput"
+                    placeholder="输入您的问题..."
+                />
+                <button id="sendButton">发送</button>
+            </div>
+
+            <div class="status" id="status">就绪</div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const loginContainer =
+                    document.getElementById("loginContainer");
+                const chatContainer = document.getElementById("chatContainer");
+                const usernameInput = document.getElementById("username");
+                const passwordInput = document.getElementById("password");
+                const loginButton = document.getElementById("loginButton");
+                const loginError = document.getElementById("loginError");
+                const chatMessages = document.getElementById("chatMessages");
+                const userInput = document.getElementById("userInput");
+                const sendButton = document.getElementById("sendButton");
+                const statusElement = document.getElementById("status");
+
+                // 存储令牌
+                let token = localStorage.getItem("qihang_ai_token");
+
+                // 如果已有令牌，尝试自动登录
+                if (token) {
+                    showChatContainer();
+                }
+
+                // 登录按钮点击事件
+                loginButton.addEventListener("click", async function () {
+                    const username = usernameInput.value.trim();
+                    const password = passwordInput.value.trim();
+
+                    if (!username || !password) {
+                        loginError.textContent = "请输入用户名和密码";
+                        return;
+                    }
+
+                    loginError.textContent = "";
+                    loginButton.disabled = true;
+                    loginButton.textContent = "登录中...";
+
+                    try {
+                        const response = await fetch(
+                            "http://localhost:8000/api/auth/token",
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type":
+                                        "application/x-www-form-urlencoded",
+                                },
+                                body: new URLSearchParams({
+                                    username: username,
+                                    password: password,
+                                }),
+                            }
+                        );
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            token = data.access_token;
+                            localStorage.setItem("qihang_ai_token", token);
+                            showChatContainer();
+                        } else {
+                            const errorData = await response.json();
+                            loginError.textContent =
+                                errorData.detail ||
+                                "登录失败，请检查用户名和密码";
+                        }
+                    } catch (error) {
+                        loginError.textContent =
+                            "登录过程中发生错误，请稍后再试";
+                        console.error("登录错误:", error);
+                    } finally {
+                        loginButton.disabled = false;
+                        loginButton.textContent = "登录";
+                    }
+                });
+
+                // 显示聊天容器
+                function showChatContainer() {
+                    loginContainer.classList.add("hidden");
+                    chatContainer.classList.remove("hidden");
+                    userInput.focus();
+                }
+
+                // 添加用户消息到聊天界面
+                function addUserMessage(message) {
+                    const messageElement = document.createElement("div");
+                    messageElement.className = "message user-message";
+                    messageElement.textContent = message;
+                    chatMessages.appendChild(messageElement);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+
+                // 添加AI消息到聊天界面
+                function addAIMessage(message, timestamp) {
+                    const messageElement = document.createElement("div");
+                    messageElement.className = "message ai-message";
+
+                    const contentElement = document.createElement("div");
+                    contentElement.textContent = message;
+                    messageElement.appendChild(contentElement);
+
+                    if (timestamp) {
+                        const timestampElement = document.createElement("div");
+                        timestampElement.className = "timestamp";
+                        timestampElement.textContent = new Date(
+                            timestamp
+                        ).toLocaleTimeString();
+                        messageElement.appendChild(timestampElement);
+                    }
+
+                    chatMessages.appendChild(messageElement);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+
+                // 发送消息到服务器
+                async function sendMessage() {
+                    const message = userInput.value.trim();
+                    if (!message) return;
+
+                    // 禁用输入和按钮
+                    userInput.disabled = true;
+                    sendButton.disabled = true;
+                    statusElement.textContent = "正在等待响应...";
+
+                    // 添加用户消息到聊天界面
+                    addUserMessage(message);
+
+                    // 清空输入框
+                    userInput.value = "";
+
+                    try {
+                        // 发送请求到服务器
+                        const response = await fetch(
+                            `http://localhost:8000/api/topics/${
+                                localStorage.getItem("qihang_ai_topic_id") ||
+                                "new"
+                            }/graph`,
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    Accept: "text/event-stream",
+                                    Authorization: `Bearer ${token}`,
+                                },
+                                body: JSON.stringify({
+                                    message: message,
+                                }),
+                            }
+                        );
+
+                        // 检查响应状态
+                        if (response.status === 401) {
+                            // 令牌无效或过期，清除令牌并显示登录界面
+                            localStorage.removeItem("qihang_ai_token");
+                            token = null;
+                            loginContainer.classList.remove("hidden");
+                            chatContainer.classList.add("hidden");
+                            loginError.textContent = "会话已过期，请重新登录";
+                            return;
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(`请求失败: ${response.status}`);
+                        }
+
+                        // 创建事件源
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+                        let buffer = "";
+
+                        // 处理流式响应
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+
+                            buffer += decoder.decode(value, { stream: true });
+
+                            // 处理SSE格式的数据
+                            const lines = buffer.split("\n\n");
+                            buffer = lines.pop() || "";
+
+                            for (const line of lines) {
+                                if (line.startsWith("data: ")) {
+                                    try {
+                                        const data = JSON.parse(
+                                            line.substring(6)
+                                        );
+                                        if (data.topic_id) {
+                                            localStorage.setItem(
+                                                "qihang_ai_topic_id",
+                                                data.topic_id
+                                            );
+                                        }
+                                        addAIMessage(
+                                            data.response || data.content,
+                                            data.timestamp
+                                        );
+                                    } catch (e) {
+                                        console.error("解析事件数据失败:", e);
+                                    }
+                                }
+                            }
+                        }
+
+                        statusElement.textContent = "响应完成";
+                    } catch (error) {
+                        console.error("请求失败:", error);
+                        statusElement.textContent =
+                            "请求失败: " + error.message;
+                        addAIMessage("抱歉，发生了错误，请稍后再试。", null);
+                    } finally {
+                        // 重新启用输入和按钮
+                        userInput.disabled = false;
+                        sendButton.disabled = false;
+                        userInput.focus();
+                    }
+                }
+
+                // 绑定发送按钮点击事件
+                sendButton.addEventListener("click", sendMessage);
+
+                // 绑定输入框回车事件
+                userInput.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") {
+                        sendMessage();
+                    }
+                });
+
+                // 初始焦点
+                if (token) {
+                    userInput.focus();
+                } else {
+                    usernameInput.focus();
+                }
+            });
+        </script>
+    </body>
+</html>

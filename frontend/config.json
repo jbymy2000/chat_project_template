@@ -1,0 +1,8 @@
+{
+  "development": {
+    "apiBaseUrl": "http://localhost:8000/api"
+  },
+  "production": {
+    "apiBaseUrl": "https://seed.globaledux.com/api"
+  }
+} 
